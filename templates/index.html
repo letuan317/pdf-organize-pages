@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PDF Page Reorder</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+        background-color: #f4f4f4;
+      }
+      .container {
+        max-width: 600px;
+        margin: 20px auto;
+        padding: 20px;
+        background-color: #fff;
+        border-radius: 8px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      }
+      h1 {
+        text-align: center;
+        font-size: 24px;
+        color: #333;
+      }
+      input[type="file"] {
+        width: 100%;
+        padding: 10px;
+        margin: 10px 0;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+      }
+      button {
+        display: block;
+        width: 100%;
+        padding: 10px;
+        background-color: #4caf50;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+      }
+      button:hover {
+        background-color: #45a049;
+      }
+      .progress-bar {
+        width: 0;
+        height: 10px;
+        background-color: #4caf50;
+        margin-top: 20px;
+        border-radius: 4px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>Upload a PDF to reorder pages</h1>
+      <form id="uploadForm" action="/upload" method="POST" enctype="multipart/form-data">
+        <input type="file" name="file" accept=".pdf" required />
+        <button type="submit">Upload and Reorder</button>
+      </form>
+      <div id="progressContainer" style="display: none">
+        <div class="progress-bar" id="progressBar"></div>
+      </div>
+    </div>
+
+    <script>
+      document.getElementById("uploadForm").addEventListener("submit", function (event) {
+        event.preventDefault();
+
+        const formData = new FormData(this);
+        const progressBar = document.getElementById("progressBar");
+        const progressContainer = document.getElementById("progressContainer");
+        progressContainer.style.display = "block";
+
+        let xhr = new XMLHttpRequest();
+        xhr.open("POST", "/upload", true);
+
+        xhr.upload.onprogress = function (e) {
+          if (e.lengthComputable) {
+            let percent = (e.loaded / e.total) * 100;
+            progressBar.style.width = percent + "%";
+          }
+        };
+
+        xhr.onload = function () {
+          if (xhr.status === 200) {
+            // Redirect to download the output PDF or show a download link
+            let blob = xhr.response;
+            let url = window.URL.createObjectURL(blob);
+            let a = document.createElement("a");
+            a.href = url;
+            a.download = "output.pdf";
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            progressContainer.style.display = "none";
+          } else {
+            alert("An error occurred");
+            progressContainer.style.display = "none";
+          }
+        };
+
+        xhr.responseType = "blob"; // Handle binary response (PDF)
+        xhr.send(formData);
+      });
+    </script>
+  </body>
+</html>
